@@ -50,7 +50,7 @@ class AdminHOD(models.Model):
     gender=models.CharField(max_length=100,null=True,choices=gender_category)
     mobile=models.CharField(max_length=10,null=True,blank=True)
     address=models.CharField(max_length=300,null=True,blank=True)
-    profile_pic=models.ImageField(default="admin.png",null=True,blank=True)
+    profile_pic=models.ImageField(default="perfil_1.png",null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     date_employed=models.DateTimeField(auto_now_add=True, auto_now=False)
