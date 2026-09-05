@@ -138,3 +138,5 @@ practice.js
 *.sw?
 
 .history
+
+staticfiles/
