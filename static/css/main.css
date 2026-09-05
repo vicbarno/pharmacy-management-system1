@@ -655,8 +655,8 @@ p {
     align-items: center !important;
 }
 
-.bs-c {
-    background: url(static/images/profile-bg.jpg);
+..bs-c {
+    background: url('../images/profile-bg.jpg');
 }
 
 .profile-header .profile-avatar {
@@ -2029,7 +2029,7 @@ label[for=id_taken] {
 }
 
 .profile-main .profile-background {
-    background-image: url('../images/samples/forest.png');
+
     background-repeat: no-repeat;
     background-size: 100%;
     background-position: center;
