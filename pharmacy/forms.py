@@ -190,6 +190,46 @@ class DispenseForm(ModelForm):
         model=Dispense
         fields='__all__'
         exclude=['stock_ref_no']
+
+
+class PointOfSaleForm(forms.Form):
+    drug_id = forms.ModelChoiceField(
+        label='Medicine',
+        queryset=Stock.objects.none(),
+        empty_label='Select medicine',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+    dispense_quantity = forms.IntegerField(
+        label='Quantity',
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+    )
+    patient_id = forms.ModelChoiceField(
+        label='Patient (optional)',
+        queryset=Patients.objects.all().order_by('first_name', 'last_name'),
+        required=False,
+        empty_label='Walk-in customer',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+    taken = forms.CharField(
+        label='Customer name (optional)',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+    payment_method = forms.ChoiceField(
+        choices=(('Cash', 'Cash'), ('Mobile Money', 'Mobile Money'), ('Card', 'Card')),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+    instructions = forms.CharField(
+        label='Notes (optional)',
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['drug_id'].queryset = Stock.objects.filter(quantity__gt=0).order_by('drug_name')
  
 class ReceiveStockForm(ModelForm):
     valid_to= forms.DateField(label="Expiry Date", widget=DateInput(attrs={"class":"form-control"}))

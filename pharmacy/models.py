@@ -178,6 +178,10 @@ class Dispense(models.Model):
     taken=models.CharField(max_length=300,null=True, blank=True)
     stock_ref_no=models.CharField(max_length=300,null=True, blank=True)
     instructions=models.TextField(max_length=300,null=True, blank=False)
+    unit_price=models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    total_price=models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    payment_method=models.CharField(max_length=20, default='Cash')
+    receipt_no=models.CharField(max_length=30, null=True, blank=True, unique=True)
     dispense_at = models.DateTimeField(auto_now_add=True,null=True, blank=True)
 
 

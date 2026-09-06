@@ -5,6 +5,11 @@ from django.contrib.auth.forms import  UserCreationForm
 from .decorators import *
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import transaction
+from django.utils import timezone
+from uuid import uuid4
 
 from django.http import HttpResponseRedirect
 from .forms import *
@@ -83,6 +88,46 @@ def managePrescription(request):
         "prescrips":precrip,
     }
     return render(request,'pharmacist_templates/patient_prescrip.html',context)
+
+
+@login_required
+def pointOfSale(request):
+    form = PointOfSaleForm(request.POST or None)
+    recent_sales = Dispense.objects.select_related('drug_id', 'patient_id').order_by('-dispense_at')[:20]
+
+    if request.method == 'POST' and form.is_valid():
+        stock_id = form.cleaned_data['drug_id'].pk
+        quantity = form.cleaned_data['dispense_quantity']
+
+        with transaction.atomic():
+            stock = Stock.objects.select_for_update().get(pk=stock_id)
+            if stock.valid_to and stock.valid_to < timezone.now():
+                form.add_error('drug_id', 'This medicine has expired and cannot be sold.')
+            elif stock.quantity < quantity:
+                form.add_error('dispense_quantity', f'Only {stock.quantity} unit(s) are available.')
+            else:
+                total_price = stock.selling_price * quantity
+                Stock.objects.filter(pk=stock.pk).update(quantity=stock.quantity - quantity)
+                Dispense.objects.create(
+                    drug_id=stock,
+                    patient_id=form.cleaned_data['patient_id'],
+                    dispense_quantity=quantity,
+                    taken=form.cleaned_data['taken'],
+                    instructions=form.cleaned_data['instructions'] or '',
+                    unit_price=stock.selling_price,
+                    total_price=total_price,
+                    payment_method=form.cleaned_data['payment_method'],
+                    receipt_no=f'POS-{uuid4().hex[:10].upper()}',
+                )
+
+                messages.success(
+                    request,
+                    f'{quantity} x {stock.drug_name} sold successfully. Total: KES {total_price:,.2f}',
+                )
+                return redirect('point_of_sale')
+
+    context = {'form': form, 'recent_sales': recent_sales}
+    return render(request, 'pharmacist_templates/point_of_sale.html', context)
 
 
     

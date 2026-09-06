@@ -1,0 +1,52 @@
+{% extends 'pharmacist_templates/base_template.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}<h4>Point of Sale</h4>{% endblock page_title %}
+
+{% block main_content %}
+<section class="content">
+    <div class="container-fluid">
+        {% include 'pharmacist_templates/alert_messeges.html' %}
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card card-info">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-cash-register mr-2"></i>New sale</h5></div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            {{ form|crispy }}
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check mr-1"></i>Complete sale</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card card-info">
+                    <div class="card-header"><h5 class="mb-0">Recent sales</h5></div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th>Receipt</th><th>Medicine</th><th>Qty</th><th>Total (KES)</th><th>Payment</th><th>Time</th></tr></thead>
+                            <tbody>
+                            {% for sale in recent_sales %}
+                                <tr>
+                                    <td>{{ sale.receipt_no|default:'-' }}</td>
+                                    <td>{{ sale.drug_id.drug_name }}</td>
+                                    <td>{{ sale.dispense_quantity }}</td>
+                                    <td>{{ sale.total_price }}</td>
+                                    <td>{{ sale.payment_method }}</td>
+                                    <td>{{ sale.dispense_at|date:'d M H:i' }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted">No sales recorded yet.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock main_content %}
