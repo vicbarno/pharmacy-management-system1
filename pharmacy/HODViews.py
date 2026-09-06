@@ -35,15 +35,6 @@ def adminDashboard(request):
     expired=ExpressionWrapper(Q(valid_to__lt=Now()), output_field=BooleanField())
     ).filter(expired=True).count()
 
-    msg = {
-        'email_subject': 'Pharmacy Stock Alert',
-        'to_email': 'catherineidowu3@gmail.com',
-        'stock': almost_out_of_stock
-    }
-
-    if almost_out_of_stock.count() > 0:
-        Util.send_email(msg)
-
     context={
         "patients_total":patients_total,
         "expired_total":exipred,
