@@ -126,6 +126,8 @@ def pointOfSale(request):
             | Q(item_id__icontains=search)
             | Q(supplier__icontains=search)
         )
+    else:
+        stock_results = stock_results[:50]
     recent_sales = Dispense.objects.select_related('drug_id', 'patient_id').order_by('-dispense_at')[:20]
     stock_catalog = [
         {
