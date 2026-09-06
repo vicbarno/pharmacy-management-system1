@@ -1,20 +1,63 @@
 {% extends 'pharmacist_templates/base_template.html' %}
-{% load crispy_forms_tags %}
-
 {% block page_title %}<h4>Point of Sale</h4>{% endblock page_title %}
 
 {% block main_content %}
 <section class="content">
     <div class="container-fluid">
         {% include 'pharmacist_templates/alert_messeges.html' %}
+        <div class="card card-info mb-4">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-search mr-2"></i>Find medicine in master stock</h5></div>
+            <div class="card-body">
+                <form method="get" class="form-row align-items-end">
+                    <div class="col-md-9 form-group mb-md-0">
+                        <label for="stock-search">Search by medicine name, item ID, or supplier</label>
+                        <input id="stock-search" type="search" name="q" value="{{ stock_search }}" class="form-control" placeholder="e.g. Amoxyl or PH-1005">
+                    </div>
+                    <div class="col-md-3 form-group mb-md-0">
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search mr-1"></i>Search stock</button>
+                    </div>
+                </form>
+            </div>
+            {% if stock_search %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Item ID</th><th>Medicine</th><th>Supplier</th><th>Available</th><th>Selling price</th><th></th></tr></thead>
+                    <tbody>
+                    {% for stock in stock_results %}
+                        <tr>
+                            <td>{{ stock.item_id|default:'-' }}</td><td><strong>{{ stock.drug_name }}</strong></td><td>{{ stock.supplier|default:'-' }}</td><td>{{ stock.quantity }}</td><td>KES {{ stock.selling_price }}</td>
+                            <td><a class="btn btn-sm btn-outline-primary" href="#sale-form" onclick="selectMedicine('{{ stock.id }}'); return false;">Select</a></td>
+                        </tr>
+                    {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No available medicine matched your search.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
         <div class="row">
             <div class="col-lg-5">
-                <div class="card card-info">
+                <div class="card card-info" id="sale-form">
                     <div class="card-header"><h5 class="mb-0"><i class="fas fa-cash-register mr-2"></i>New sale</h5></div>
                     <form method="post">
                         {% csrf_token %}
                         <div class="card-body">
-                            {{ form|crispy }}
+                            {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                            {% for field in form %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endfor %}
+                            <div class="border rounded p-3 bg-light" id="sale-summary" aria-live="polite">
+                                <div class="small text-muted text-uppercase">Sale summary</div>
+                                <div class="d-flex justify-content-between mt-2"><span>Medicine</span><strong id="summary-name">Select a medicine</strong></div>
+                                <div class="d-flex justify-content-between"><span>Available</span><strong id="summary-stock">-</strong></div>
+                                <div class="d-flex justify-content-between"><span>Unit price</span><strong>KES <span id="summary-price">0.00</span></strong></div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between"><strong>Total</strong><strong class="text-primary">KES <span id="summary-total">0.00</span></strong></div>
+                                <div class="text-danger small mt-2 d-none" id="stock-warning">Requested quantity is greater than available stock.</div>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check mr-1"></i>Complete sale</button>
@@ -49,4 +92,51 @@
         </div>
     </div>
 </section>
+{{ stock_catalog|json_script:'stock-catalog' }}
+<script>
+    (function () {
+        var catalog = JSON.parse(document.getElementById('stock-catalog').textContent);
+        var medicineField = document.getElementById('id_drug_id');
+        var quantityField = document.getElementById('id_dispense_quantity');
+        var nameField = document.getElementById('summary-name');
+        var stockField = document.getElementById('summary-stock');
+        var priceField = document.getElementById('summary-price');
+        var totalField = document.getElementById('summary-total');
+        var warning = document.getElementById('stock-warning');
+
+        function updateSummary() {
+            var item = catalog.find(function (entry) { return String(entry.id) === medicineField.value; });
+            var quantity = Math.max(parseInt(quantityField.value || '0', 10), 0);
+            if (!item) {
+                nameField.textContent = 'Select a medicine';
+                stockField.textContent = '-';
+                priceField.textContent = '0.00';
+                totalField.textContent = '0.00';
+                warning.classList.add('d-none');
+                return;
+            }
+            var price = parseFloat(item.price) || 0;
+            nameField.textContent = item.name;
+            stockField.textContent = item.quantity;
+            priceField.textContent = price.toFixed(2);
+            totalField.textContent = (price * quantity).toFixed(2);
+            warning.classList.toggle('d-none', quantity <= item.quantity);
+        }
+
+        medicineField.addEventListener('change', updateSummary);
+        quantityField.addEventListener('input', updateSummary);
+        updateSummary();
+    }());
+
+    function selectMedicine(stockId) {
+        var medicine = document.getElementById('id_drug_id');
+        medicine.value = stockId;
+        if (window.jQuery && jQuery.fn.select2 && jQuery(medicine).hasClass('select2-hidden-accessible')) {
+            jQuery(medicine).val(stockId).trigger('change');
+        }
+        medicine.dispatchEvent(new Event('change'));
+        document.getElementById('id_dispense_quantity').focus();
+        document.getElementById('sale-form').scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+</script>
 {% endblock main_content %}

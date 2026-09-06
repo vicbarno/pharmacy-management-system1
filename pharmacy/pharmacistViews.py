@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.utils import timezone
 from uuid import uuid4
 
@@ -25,12 +26,36 @@ def pharmacistHome(request):
  
     out_of_stock=Stock.objects.filter(quantity__lte=0).count()
     total_stock=Stock.objects.all().count()
+    low_stock = Stock.objects.filter(quantity__lte=F('reorder_level')).order_by('quantity', 'drug_name')[:8]
+    low_stock_total = Stock.objects.filter(quantity__lte=F('reorder_level')).count()
+    recent_sales = Dispense.objects.select_related('drug_id', 'patient_id').order_by('-dispense_at')[:6]
+    sales_today = Dispense.objects.filter(dispense_at__date=timezone.localdate()).count()
+    revenue_today = Dispense.objects.filter(
+        dispense_at__date=timezone.localdate()
+    ).aggregate(total=Sum('total_price'))['total'] or 0
+    daily_cost = Dispense.objects.filter(
+        dispense_at__date=timezone.localdate()
+    ).aggregate(total=Sum(ExpressionWrapper(
+        F('dispense_quantity') * F('drug_id__buying_price'),
+        output_field=DecimalField(max_digits=12, decimal_places=2),
+    )))['total'] or 0
+    stock_value = Stock.objects.aggregate(total=Sum(ExpressionWrapper(
+        F('quantity') * F('buying_price'),
+        output_field=DecimalField(max_digits=14, decimal_places=2),
+    )))['total'] or 0
 
     context={
 "patients_total":patients_total,
         "expired_total":exipred,
         "out_of_stock":out_of_stock,
         "total_drugs":total_stock,
+        "low_stock":low_stock,
+        "low_stock_total":low_stock_total,
+        "recent_sales":recent_sales,
+        "sales_today":sales_today,
+        "revenue_today":revenue_today,
+        "daily_net_profit":revenue_today - daily_cost,
+        "stock_value":stock_value,
         
     }
     return render(request,'pharmacist_templates/pharmacist_home.html',context)
@@ -92,8 +117,27 @@ def managePrescription(request):
 
 @login_required
 def pointOfSale(request):
-    form = PointOfSaleForm(request.POST or None)
+    search = request.GET.get('q', '').strip()
+    form = PointOfSaleForm(request.POST or None, search=search)
+    stock_results = Stock.objects.filter(quantity__gt=0).order_by('drug_name')
+    if search:
+        stock_results = stock_results.filter(
+            Q(drug_name__icontains=search)
+            | Q(item_id__icontains=search)
+            | Q(supplier__icontains=search)
+        )
     recent_sales = Dispense.objects.select_related('drug_id', 'patient_id').order_by('-dispense_at')[:20]
+    stock_catalog = [
+        {
+            'id': item['id'],
+            'name': item['drug_name'],
+            'quantity': item['quantity'],
+            'price': str(item['selling_price']),
+        }
+        for item in Stock.objects.filter(quantity__gt=0).values(
+            'id', 'drug_name', 'quantity', 'selling_price'
+        )
+    ]
 
     if request.method == 'POST' and form.is_valid():
         stock_id = form.cleaned_data['drug_id'].pk
@@ -126,14 +170,30 @@ def pointOfSale(request):
                 )
                 return redirect('point_of_sale')
 
-    context = {'form': form, 'recent_sales': recent_sales}
+    context = {
+        'form': form,
+        'recent_sales': recent_sales,
+        'stock_results': stock_results,
+        'stock_search': search,
+        'stock_catalog': stock_catalog,
+    }
     return render(request, 'pharmacist_templates/point_of_sale.html', context)
 
 
     
 def manageStock(request):
-    stocks = Stock.objects.all()
-    stocks = Stock.objects.all().order_by("-id")
+    search = request.GET.get('q', '').strip()
+    status = request.GET.get('status', 'all')
+    stocks = Stock.objects.select_related('category').all()
+    if search:
+        stocks = stocks.filter(Q(drug_name__icontains=search) | Q(item_id__icontains=search) | Q(supplier__icontains=search))
+    if status == 'low':
+        stocks = stocks.filter(quantity__lte=F('reorder_level'))
+    elif status == 'out':
+        stocks = stocks.filter(quantity__lte=0)
+    elif status == 'available':
+        stocks = stocks.filter(quantity__gt=0)
+    stocks = stocks.order_by('drug_name')
     ex=Stock.objects.annotate(
     expired=ExpressionWrapper(Q(valid_to__lt=Now()), output_field=BooleanField())
     ).filter(expired=True)

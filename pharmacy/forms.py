@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.core.exceptions import ValidationError
 from phonenumber_field.formfields import PhoneNumberField
 from django.core.validators import RegexValidator
+from django.db.models import Q
 
 import json
 class PatientPicForm1(forms.ModelForm):
@@ -228,8 +229,16 @@ class PointOfSaleForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        search = kwargs.pop('search', '').strip()
         super().__init__(*args, **kwargs)
-        self.fields['drug_id'].queryset = Stock.objects.filter(quantity__gt=0).order_by('drug_name')
+        medicines = Stock.objects.filter(quantity__gt=0)
+        if search:
+            medicines = medicines.filter(
+                Q(drug_name__icontains=search)
+                | Q(item_id__icontains=search)
+                | Q(supplier__icontains=search)
+            )
+        self.fields['drug_id'].queryset = medicines.order_by('drug_name')
  
 class ReceiveStockForm(ModelForm):
     valid_to= forms.DateField(label="Expiry Date", widget=DateInput(attrs={"class":"form-control"}))

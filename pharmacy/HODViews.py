@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone, dateformat
 from django.core.exceptions import ValidationError
 from datetime import datetime
-from django.db.models import Q
+from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import datetime
 
@@ -34,6 +34,22 @@ def adminDashboard(request):
     exipred=Stock.objects.annotate(
     expired=ExpressionWrapper(Q(valid_to__lt=Now()), output_field=BooleanField())
     ).filter(expired=True).count()
+    today = timezone.localdate()
+    daily_sales = Dispense.objects.filter(dispense_at__date=today).aggregate(
+        total=Sum('total_price')
+    )['total'] or 0
+    daily_cost = Dispense.objects.filter(dispense_at__date=today).aggregate(
+        total=Sum(ExpressionWrapper(
+            F('dispense_quantity') * F('drug_id__buying_price'),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        ))
+    )['total'] or 0
+    stock_value = Stock.objects.aggregate(
+        total=Sum(ExpressionWrapper(
+            F('quantity') * F('buying_price'),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        ))
+    )['total'] or 0
 
     context={
         "patients_total":patients_total,
@@ -44,7 +60,11 @@ def adminDashboard(request):
         "all_pharmacists":pharmacist,
         "all_clerks":receptionist,
         "for_today":for_today,
-        "refill_stock": almost_out_of_stock
+        "refill_stock": almost_out_of_stock,
+        "daily_sales": daily_sales,
+        "daily_cost": daily_cost,
+        "daily_net_profit": daily_sales - daily_cost,
+        "stock_value": stock_value,
     }
     return render(request,'hod_templates/admin_dashboard.html',context)
 

@@ -8,8 +8,18 @@
 
 
             <div class="card card-primar sc">
-                <div class="card-header">
-                    Stock Details
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                    <span>Stock Details</span>
+                    <form method="get" class="form-inline mt-2 mt-md-0">
+                        <input type="search" name="q" value="{{ request.GET.q }}" class="form-control form-control-sm mr-2" placeholder="Search name, ID, supplier">
+                        <select name="status" class="form-control form-control-sm mr-2">
+                            <option value="all" {% if request.GET.status == 'all' or not request.GET.status %}selected{% endif %}>All stock</option>
+                            <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>Available</option>
+                            <option value="low" {% if request.GET.status == 'low' %}selected{% endif %}>Low stock</option>
+                            <option value="out" {% if request.GET.status == 'out' %}selected{% endif %}>Out of stock</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-search"></i><span class="sr-only">Search</span></button>
+                    </form>
                 </div>
                 {% include 'pharmacist_templates/alert_messeges.html' %}
 
@@ -32,7 +42,7 @@
                         {% for stock in stocks %}
                         <tr class="hov">
                             <td>{{forloop.counter}}</td>
-                            <td>{{stock.drug_name}}</td>
+                            <td><strong>{{stock.drug_name}}</strong><br><small class="text-muted">{{ stock.item_id|default:'No item ID' }}</small></td>
                             <td>{{stock.category}}</td>
                             <td>
                                 <span class="d-flex justify-content-center">

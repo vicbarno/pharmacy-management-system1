@@ -1,4 +1,4 @@
-{% extends 'base_file.html' %} {% block htm %}
+{% extends 'base_file.html' %} {% load static %} {% block htm %}
 
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
@@ -16,7 +16,7 @@
 
                     <a href="#" class="sm-submenu-with-image a">
                         <span>{{user.first_name}}  {{user.last_name}}</span>
-                        <img src="{{request.user.pharmacist.profile_pic.url}}" class="img-circle elevation-1" width="38" height="38" alt="">
+                        {% if request.user.user_type == '2' and request.user.pharmacist.profile_pic %}<img src="{{request.user.pharmacist.profile_pic.url}}" class="img-circle elevation-1" width="38" height="38" alt="">{% else %}<img src="{% static 'images/admin.png' %}" class="img-circle elevation-1" width="38" height="38" alt="">{% endif %}
                         <span class="avatar-status avatar-sm-status avatar-status-success"></span>
                     </a>
                 </li>
