@@ -1,5 +1,13 @@
 {% extends 'base_file.html' %} {% load static %} {% block htm %}
 
+<style>
+    @media (max-width: 767px) {
+        .main-sidebar { transform: translateX(-100%); transition: transform .2s ease; }
+        body.pharmacist-sidebar-open .main-sidebar { transform: translateX(0); }
+        .content-wrapper { margin-left: 0 !important; }
+    }
+</style>
+
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
@@ -76,5 +84,16 @@
 
 
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var menuButton = document.querySelector('[data-widget="pushmenu"]');
+            if (!menuButton) return;
+            menuButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                document.body.classList.toggle('pharmacist-sidebar-open');
+            });
+        });
+    </script>
 
     {% endblock htm %}
