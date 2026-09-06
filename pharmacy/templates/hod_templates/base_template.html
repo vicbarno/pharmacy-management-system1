@@ -2,11 +2,35 @@
 {% load static %}
 {% block htm %}
 
+<style>
+    .admin-shell .main-sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: 230px; z-index: 1038; overflow-y: auto; background: #ffffff !important; border-right: 1px solid #e5e9f0; box-shadow: 4px 0 18px rgba(25, 48, 85, .06); }
+    .admin-shell .main-sidebar .brand-link { color: #102a43 !important; border-bottom: 1px solid #e5e9f0; }
+    .admin-shell .main-sidebar .brand-text { color: #102a43 !important; font-weight: 600 !important; }
+    .admin-shell .main-sidebar .user-panel { border-bottom: 1px solid #e5e9f0; }
+    .admin-shell .main-sidebar .info p,
+    .admin-shell .main-sidebar .nav-link,
+    .admin-shell .main-sidebar .nav-link p { color: #243b53 !important; }
+    .admin-shell .main-sidebar .nav-link:hover,
+    .admin-shell .main-sidebar .nav-link.active { background: #eaf4ff !important; color: #0b63ce !important; }
+    .admin-shell .main-sidebar .nav-link:hover p,
+    .admin-shell .main-sidebar .nav-link.active p,
+    .admin-shell .main-sidebar .nav-link:hover i,
+    .admin-shell .main-sidebar .nav-link.active i { color: #0b63ce !important; }
+    .admin-shell .main-sidebar .nav-treeview { background: #f8fbff; }
+    .admin-shell .main-header, .admin-shell .content-wrapper, .admin-shell .main-footer { margin-left: 230px; }
+    .admin-shell .content-wrapper { min-height: calc(100vh - 120px); }
+    @media (max-width: 767px) {
+        .admin-shell .main-sidebar { width: 250px; transform: translateX(-100%); transition: transform .2s ease; }
+        body.admin-sidebar-open .admin-shell .main-sidebar { transform: translateX(0); }
+        .admin-shell .main-header, .admin-shell .content-wrapper, .admin-shell .main-footer { margin-left: 0 !important; }
+    }
+</style>
+
 <body class="hold-transition sidebar-mini layout-fixed">
 
 
 
-    <div class="wrapper">
+    <div class="wrapper admin-shell">
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <!-- Left navbar links -->
@@ -23,7 +47,7 @@
 
                     <a href="#" class="sm-submenu-with-image a">
                         <span>{{user.first_name}}  {{user.last_name}}</span>
-                        <img src="{% static 'images/perfil_1.png' %}" class="img-circle elevation-1" width="38" height="38" alt="">
+                        <img src="{% static 'images/admin.png' %}" class="img-circle elevation-1" width="38" height="38" alt="">
                         <span class="avatar-status avatar-sm-status avatar-status-success"></span>
                     </a>
                 </li>
@@ -97,6 +121,16 @@
 
 
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var menuButton = document.querySelector('[data-widget="pushmenu"]');
+            if (!menuButton) return;
+            menuButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                document.body.classList.toggle('admin-sidebar-open');
+            });
+        });
+    </script>
     <script>
         setTimeout(function() {
             $('.alert').fadeOut();
