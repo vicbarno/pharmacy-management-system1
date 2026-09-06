@@ -6,7 +6,7 @@ This document provides step-by-step instructions to deploy the Pharmacy Manageme
 
 1. A Render.com account (free tier available)
 2. A GitHub repository with your code
-3. A PostgreSQL database (Render provides free tier)
+3. A PostgreSQL database (the included `render.yaml` provisions one)
 4. Environment variables configured
 
 ## Step 1: Prepare Your Repository
@@ -50,14 +50,11 @@ This document provides step-by-step instructions to deploy the Pharmacy Manageme
 
 ### Option A: Using render.yaml (Recommended)
 
-1. Update `render.yaml`:
-   - Change `your-app-name` to your desired app name
-   - This will be used in the URL: `your-app-name.onrender.com`
-
-2. Go to Render.com → "New +" → "Web Service"
-3. Select your GitHub repository
-4. Render will auto-detect `render.yaml` and configure automatically
-5. Click "Deploy"
+1. Push the repository to GitHub.
+2. Go to Render.com → "New +" → "Blueprint".
+3. Select your GitHub repository and choose the branch to deploy.
+4. Render will provision the PostgreSQL database and web service from `render.yaml`.
+5. Set `SECRET_KEY`, `EMAIL_HOST_USER`, and `EMAIL_HOST_PASSWORD` when prompted, then deploy.
 
 ### Option B: Manual Configuration
 
@@ -66,9 +63,9 @@ This document provides step-by-step instructions to deploy the Pharmacy Manageme
 3. Configure the following:
    - **Name**: `pharmacy-management`
    - **Environment**: `Python 3.11`
-   - **Build Command**: 
+   - **Build Command**:
      ```bash
-     pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+       ./build.sh
      ```
    - **Start Command**: 
      ```bash

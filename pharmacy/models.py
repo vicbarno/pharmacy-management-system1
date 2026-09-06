@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -144,8 +145,12 @@ class ExpiredManager(models.Manager):
 
 class Stock(models.Model):
     category = models.ForeignKey(Category,null=True,on_delete=models.CASCADE,blank=True)
+    item_id = models.CharField(max_length=30, blank=True, null=True, unique=True)
     drug_imprint=models.CharField(max_length=6 ,blank=True, null=True)
     drug_name = models.CharField(max_length=50, blank=True, null=True)
+    buying_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    supplier = models.CharField(max_length=100, blank=True, null=True)
     drug_color = models.CharField(max_length=50, blank=True, null=True)
     drug_shape = models.CharField(max_length=50, blank=True, null=True)
     quantity = models.IntegerField(default='0', blank=True, null=True)

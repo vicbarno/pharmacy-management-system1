@@ -17,4 +17,8 @@ python manage.py collectstatic --noinput
 echo "Running migrations..."
 python manage.py migrate
 
+# Seed the Render database from the committed workbook on first deploy only.
+echo "Seeding inventory if the database is empty..."
+python manage.py import_inventory --only-if-empty
+
 echo "Build complete!"

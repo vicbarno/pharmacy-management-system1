@@ -1,13 +1,15 @@
+databases:
+  - name: pharmacy-db
+    plan: free
+    databaseName: pharmacy_db
+    user: pharmacy_user
+
 services:
   - type: web
     name: pharmacy-management
     env: python
     plan: free
-    buildCommand: |
-  pip install -r requirements.txt
-  python manage.py collectstatic --noinput
-  python manage.py migrate
-  python manage.py create_production_admin
+    buildCommand: ./build.sh
     startCommand: gunicorn pharm.wsgi:application
     envVars:
       - key: DEBUG
@@ -17,7 +19,9 @@ services:
       - key: SECRET_KEY
         sync: false
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: pharmacy-db
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: "pharmacy-management.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS

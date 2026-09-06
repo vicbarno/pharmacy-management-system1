@@ -21,6 +21,8 @@
                             <th>Drug</th>
                             <th>Category</th>
                             <th>Quantiy</th>
+                            <th>Buying Price</th>
+                            <th>Selling Price</th>
                             <th>Expiry Date</th>
                             <th class="text-center">Action</th>
 
@@ -40,6 +42,8 @@
                             {% endif %}</span>
 
                             </td>
+                            <td>{{stock.buying_price}}</td>
+                            <td>{{stock.selling_price}}</td>
                             <!-- start expire -->
                             {% if expired %}
                             <!-- Checks expired drugs -->

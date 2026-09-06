@@ -64,6 +64,8 @@
                             <th>Drug</th>
                             <th>Category</th>
                             <th>Quantiy</th>
+                            <th>Buying Price</th>
+                            <th>Selling Price</th>
                             <th>Reorder Level</th>
                             <th>Date Stocked</th>
                             <th>Expiry Date</th>
@@ -85,6 +87,8 @@
                                 {% endif %}</span>
 
                             </td>
+                            <td>{{stock.buying_price}}</td>
+                            <td>{{stock.selling_price}}</td>
                             <td>
                                 {% if stock.reorder_level %}
                                 <a href="{% url 'reorder_level' stock.id %}">{{stock.reorder_level}}</a></td>
